@@ -15,6 +15,8 @@ class PngMetadataViewer:
         self.root = TkinterDnD.Tk() if HAS_DND else tk.Tk()
         self.root.title("PNG Metadata Viewer")
         self.root.geometry("800x600")
+        self.current_image = None
+        self._resize_after_id = None
         self.create_menu()
         self.setup_gui()
 
@@ -45,8 +47,11 @@ class PngMetadataViewer:
         # 左側：画像表示エリア
         self.image_frame = ttk.LabelFrame(self.paned, text="画像")
 
-        self.image_label = ttk.Label(self.image_frame, text="ここに画像をドロップ")
+        self.image_label = ttk.Label(self.image_frame, text="ここに画像をドロップ", anchor="center")
         self.image_label.pack(expand=True, fill="both", padx=5, pady=5)
+
+        # 表示領域のリサイズ検知
+        self.image_frame.bind("<Configure>", self._on_resize)
 
         # ドラッグ＆ドロップの設定
         if HAS_DND:
@@ -130,13 +135,9 @@ class PngMetadataViewer:
                 else:
                     self.metadata_text.insert(tk.END, "この画像はPNGファイルではありません。")
 
-                # 画像の表示（リサイズして表示）
-                display_size = (400, 400)  # 表示サイズの最大値
-                img.thumbnail(display_size, Image.Resampling.LANCZOS)
-                photo = ImageTk.PhotoImage(img)
-
-                self.image_label.configure(image=photo)
-                self.image_label.image = photo  # 参照を保持
+                # 元画像を保持してから表示を更新
+                self.current_image = img.copy()
+                self._update_image_display()
 
                 # ステータスバーの更新
                 file_name = os.path.basename(file_path)
@@ -145,6 +146,32 @@ class PngMetadataViewer:
         except Exception as e:
             messagebox.showerror("エラー", f"画像の読み込み中にエラーが発生しました：\n{str(e)}")
             self.status_bar.config(text="エラーが発生しました")
+
+    def _on_resize(self, event):
+        """リサイズ時に再描画をデバウンスして呼び出す"""
+        if self._resize_after_id:
+            self.root.after_cancel(self._resize_after_id)
+        self._resize_after_id = self.root.after(50, self._update_image_display)
+
+    def _update_image_display(self):
+        """表示領域に合わせて画像をリサイズして描画する"""
+        if self.current_image is None:
+            return
+        frame_w = self.image_frame.winfo_width()
+        frame_h = self.image_frame.winfo_height()
+        if frame_w <= 1 or frame_h <= 1:
+            return
+        # パディング分を除いた表示可能領域
+        area_w = max(frame_w - 10, 1)
+        area_h = max(frame_h - 10, 1)
+        img = self.current_image.copy()
+        img_w, img_h = img.size
+        # 表示領域より大きい場合のみ縮小（小さい場合は原寸で中央表示）
+        if img_w > area_w or img_h > area_h:
+            img.thumbnail((area_w, area_h), Image.Resampling.LANCZOS)
+        photo = ImageTk.PhotoImage(img)
+        self.image_label.configure(image=photo, text="")
+        self.image_label.image = photo
 
     def toggle_text_wrap(self):
         """テキストの折り返し設定を切り替える"""
