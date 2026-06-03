@@ -32,22 +32,56 @@ class PngMetadataViewer:
         main_frame = ttk.Frame(self.root)
         main_frame.pack(expand=True, fill="both", padx=10, pady=10)
 
+        # PanedWindowの作成（左右に分割）
+        self.paned = ttk.PanedWindow(main_frame, orient=tk.HORIZONTAL)
+        self.paned.pack(expand=True, fill="both")
+
         # 左側：画像表示エリア
-        self.image_frame = ttk.LabelFrame(main_frame, text="画像")
-        self.image_frame.pack(side="left", expand=True, fill="both", padx=5, pady=5)
+        self.image_frame = ttk.LabelFrame(self.paned, text="画像")
 
         self.image_label = ttk.Label(self.image_frame)
         self.image_label.pack(expand=True, fill="both", padx=5, pady=5)
 
         # 右側：メタデータ表示エリア
-        metadata_frame = ttk.LabelFrame(main_frame, text="メタデータ")
-        metadata_frame.pack(side="right", expand=True, fill="both", padx=5, pady=5)
+        metadata_frame = ttk.LabelFrame(self.paned, text="メタデータ")
 
-        # メタデータ表示用のテキストエリア
-        self.metadata_text = tk.Text(metadata_frame, wrap=tk.WORD, width=40)
-        self.metadata_text.pack(expand=True, fill="both", padx=5, pady=5)
+        # メタデータ表示のコントロールフレーム
+        control_frame = ttk.Frame(metadata_frame)
+        control_frame.pack(fill="x", padx=5, pady=(5,0))
 
-        # ステータスバー
+        # 折り返しの設定用チェックボックス
+        self.wrap_var = tk.BooleanVar(value=True)  # デフォルトで折り返し有効
+        self.wrap_checkbox = ttk.Checkbutton(
+            control_frame,
+            text="テキストを折り返す",
+            variable=self.wrap_var,
+            command=self.toggle_text_wrap
+        )
+        self.wrap_checkbox.pack(side="left")
+
+        # メタデータ表示用のテキストエリアとスクロールバー
+        text_frame = ttk.Frame(metadata_frame)
+        text_frame.pack(expand=True, fill="both", padx=5, pady=5)
+
+        # テキストとスクロールバーを含むフレーム
+        text_scrollbar_frame = ttk.Frame(text_frame)
+        text_scrollbar_frame.pack(expand=True, fill="both")
+
+        self.metadata_text = tk.Text(text_scrollbar_frame, wrap=tk.WORD)
+        self.metadata_text.pack(side="left", expand=True, fill="both")
+
+        # 縦スクロールバー
+        v_scrollbar = ttk.Scrollbar(text_scrollbar_frame, orient="vertical", command=self.metadata_text.yview)
+        v_scrollbar.pack(side="right", fill="y")
+        self.metadata_text.configure(yscrollcommand=v_scrollbar.set)
+
+        # 横スクロールバー（初期状態では非表示）
+        self.h_scrollbar = ttk.Scrollbar(text_frame, orient="horizontal", command=self.metadata_text.xview)
+        self.metadata_text.configure(xscrollcommand=self.h_scrollbar.set)
+
+        # PanedWindowにペインを追加
+        self.paned.add(self.image_frame, weight=1)  # weight=1で左ペインが伸縮可能に
+        self.paned.add(metadata_frame, weight=1)    # weight=1で右ペインが伸縮可能に        # ステータスバー
         self.status_bar = ttk.Label(self.root, text="準備完了", relief=tk.SUNKEN, anchor=tk.W)
         self.status_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
@@ -88,6 +122,17 @@ class PngMetadataViewer:
         except Exception as e:
             messagebox.showerror("エラー", f"画像の読み込み中にエラーが発生しました：\n{str(e)}")
             self.status_bar.config(text="エラーが発生しました")
+
+    def toggle_text_wrap(self):
+        """テキストの折り返し設定を切り替える"""
+        if self.wrap_var.get():
+            # 折り返しを有効にする
+            self.metadata_text.configure(wrap=tk.WORD)
+            self.h_scrollbar.pack_forget()  # 横スクロールバーを非表示
+        else:
+            # 折り返しを無効にする
+            self.metadata_text.configure(wrap=tk.NONE)
+            self.h_scrollbar.pack(side="bottom", fill="x")  # 横スクロールバーを表示
 
     def run(self):
         self.root.mainloop()
