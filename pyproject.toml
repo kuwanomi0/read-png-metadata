@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "read-png-metadata"
+version = "1.0.0"
+description = "PNG画像からメタ情報を抽出するソフト"
+authors = ["kuwanomi0"]
+readme = "README.md"
+packages = [{ include = "src" }]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+Pillow = ">=9.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

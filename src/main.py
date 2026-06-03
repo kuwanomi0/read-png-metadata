@@ -1,4 +1,4 @@
-from gui.app import PngMetadataViewer
+from .gui.app import PngMetadataViewer
 
 def main():
     app = PngMetadataViewer()
