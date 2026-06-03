@@ -109,7 +109,19 @@ test-arrow = ["arro3-compute", "arro3-core", "nanoarrow", "pyarrow"]
 tests = ["check-manifest", "coverage (>=7.4.2)", "defusedxml", "markdown2", "olefile", "packaging", "pyroma (>=5)", "pytest", "pytest-cov", "pytest-timeout", "pytest-xdist", "trove-classifiers (>=2024.10.12)"]
 xmp = ["defusedxml"]
 
+[[package]]
+name = "tkinterdnd2"
+version = "0.4.4.1"
+description = "TkinterDnD2 is a python wrapper for George Petasis'' tkDnD Tk extension version 2"
+optional = false
+python-versions = ">=3.6"
+groups = ["main"]
+files = [
+    {file = "tkinterdnd2-0.4.4.1-py3-none-any.whl", hash = "sha256:d1af61a544a2ec6bdec26baa04c0853c97be044fd89816c0879367887419f713"},
+    {file = "tkinterdnd2-0.4.4.1.tar.gz", hash = "sha256:e8ca37be9ac4fc37d8d53850f88086a9dcb761ea63d667eaa473ed1c87c7b968"},
+]
+
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.13"
-content-hash = "8710ff702073f357be259f8e460bfa615856f4ec5d70a4fcad90a62df77a7657"
+content-hash = "c1b8f4169cf6b5b5d2a37abd84d75ee9bd8cce42da220ce1e8ab2ccd49950853"

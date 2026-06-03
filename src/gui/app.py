@@ -4,9 +4,15 @@ from PIL import Image, ImageTk
 from PIL.PngImagePlugin import PngImageFile
 import os
 
+try:
+    from tkinterdnd2 import DND_FILES, TkinterDnD
+    HAS_DND = True
+except ImportError:
+    HAS_DND = False
+
 class PngMetadataViewer:
     def __init__(self):
-        self.root = tk.Tk()
+        self.root = TkinterDnD.Tk() if HAS_DND else tk.Tk()
         self.root.title("PNG Metadata Viewer")
         self.root.geometry("800x600")
         self.create_menu()
@@ -39,8 +45,13 @@ class PngMetadataViewer:
         # 左側：画像表示エリア
         self.image_frame = ttk.LabelFrame(self.paned, text="画像")
 
-        self.image_label = ttk.Label(self.image_frame)
+        self.image_label = ttk.Label(self.image_frame, text="ここに画像をドロップ")
         self.image_label.pack(expand=True, fill="both", padx=5, pady=5)
+
+        # ドラッグ＆ドロップの設定
+        if HAS_DND:
+            self.image_label.drop_target_register(DND_FILES)
+            self.image_label.dnd_bind('<<Drop>>', self._on_drop)
 
         # 右側：メタデータ表示エリア
         metadata_frame = ttk.LabelFrame(self.paned, text="メタデータ")
@@ -85,15 +96,27 @@ class PngMetadataViewer:
         self.status_bar = ttk.Label(self.root, text="準備完了", relief=tk.SUNKEN, anchor=tk.W)
         self.status_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
+    def _on_drop(self, event):
+        """ドラッグ＆ドロップされたファイルを開く"""
+        data = event.data
+        if data.startswith('{'):
+            path = data.split('}')[0][1:]
+        else:
+            path = data.split()[0]
+        path = path.strip()
+        if path:
+            self.load_image(path)
+
     def open_image(self):
         file_path = filedialog.askopenfilename(
             title="PNG画像を選択",
             filetypes=[("PNG files", "*.png"), ("All files", "*.*")]
         )
-
         if not file_path:
             return
+        self.load_image(file_path)
 
+    def load_image(self, file_path):
         try:
             with Image.open(file_path) as img:
                 # メタデータの表示
